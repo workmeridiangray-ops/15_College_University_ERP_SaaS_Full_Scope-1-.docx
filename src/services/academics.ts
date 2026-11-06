@@ -340,3 +340,20 @@ export async function unreadCount(user: SessionUser) {
 export async function markNotificationsRead(user: SessionUser) {
   await query("UPDATE notifications SET read_at=now() WHERE user_id=$1 AND read_at IS NULL", [user.id]);
 }
+
+/** Course+section combinations the user may teach: faculty by timetable, admin/HOD by program. */
+export async function teachingOptions(user: SessionUser) {
+  const ctx = authorize(user, "attendance.read");
+  if (user.role === "faculty") {
+    return (await query(`SELECT DISTINCT c.id course_id, c.code, c.name course, s.id section_id, s.name section, s.year_no, p.name program FROM timetable_slots t
+      JOIN courses c ON c.id=t.course_id JOIN sections s ON s.id=t.section_id JOIN programs p ON p.id=s.program_id WHERE t.institution_id=$1 AND t.faculty_user_id=$2 ORDER BY c.code`, [ctx.institutionId, user.id])).rows as TeachOpt[];
+  }
+  return (await query(`SELECT c.id course_id, c.code, c.name course, s.id section_id, s.name section, s.year_no, p.name program FROM courses c
+    JOIN sections s ON s.program_id=c.program_id AND s.institution_id=c.institution_id JOIN programs p ON p.id=c.program_id WHERE c.institution_id=$1 ORDER BY p.name, c.code, s.year_no, s.name`, [ctx.institutionId])).rows as TeachOpt[];
+}
+export type TeachOpt = { course_id: string; code: string; course: string; section_id: string; section: string; year_no: number; program: string };
+
+export async function facultyList(user: SessionUser) {
+  const ctx = authorize(user, "timetable.manage");
+  return (await query("SELECT id, name FROM users WHERE institution_id=$1 AND role IN ('faculty','hod') AND active ORDER BY name", [ctx.institutionId])).rows as { id: string; name: string }[];
+}

@@ -228,3 +228,13 @@ export async function getInstitution(user: SessionUser) {
 }
 
 export { type Role };
+
+/** Administrator-issued one-time link (24h) for invites and recovery when email is unavailable. */
+export async function issueResetLink(user: SessionUser, targetUserId: string): Promise<string> {
+  const ctx = authorize(user, "users.manage", { write: true });
+  await assertOwned("users", targetUserId, ctx.institutionId);
+  const token = randomToken();
+  await query("INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1,$2, now() + interval '24 hours')", [sha256(token), targetUserId]);
+  await audit(user, "auth.reset_link_issued", "user", targetUserId);
+  return token;
+}

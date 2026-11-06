@@ -37,6 +37,6 @@ export function can(role: Role, perm: Permission): boolean {
 export function homeFor(role: Role): string {
   if (role === "super_admin") return "/super";
   if (role === "student" || role === "parent") return "/portal";
-  if (role === "applicant") return "/apply";
+  if (role === "applicant") return "/track";
   return "/app";
 }

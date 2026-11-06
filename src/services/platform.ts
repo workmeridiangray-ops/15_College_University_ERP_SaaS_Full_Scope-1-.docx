@@ -3,7 +3,7 @@ import { one, query, tx } from "@/lib/db";
 import { AppError, conflict, forbidden, invalid, notFound } from "@/lib/errors";
 import { audit } from "@/lib/audit";
 import { authorize, type SessionUser } from "@/lib/session";
-import { hashPassword, validatePasswordStrength } from "@/lib/crypto";
+import { hashPassword, randomToken, sha256, validatePasswordStrength } from "@/lib/crypto";
 import { parse } from "./core";
 
 function superOnly(user: SessionUser | null): SessionUser {
@@ -131,4 +131,15 @@ export async function closeTicket(user: SessionUser, id: string) {
   await ticketAccess(user, id);
   await query("UPDATE tickets SET status='closed' WHERE id=$1", [id]);
   await audit(user, "ticket.closed", "ticket", id);
+}
+
+/** Lets the platform operator recover an institution whose only admin is locked out. */
+export async function issueAdminResetLink(user: SessionUser | null, institutionId: string): Promise<string> {
+  const u = superOnly(user);
+  const admin = await one<{ id: string }>("SELECT id FROM users WHERE institution_id=$1 AND role='institution_admin' AND active ORDER BY created_at LIMIT 1", [institutionId]);
+  if (!admin) throw notFound("This institution has no active administrator.");
+  const token = randomToken();
+  await query("INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1,$2, now() + interval '24 hours')", [sha256(token), admin.id]);
+  await audit({ id: u.id, institutionId }, "platform.admin_reset_link", "user", admin.id);
+  return token;
 }

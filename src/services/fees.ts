@@ -244,3 +244,10 @@ export async function receipt(user: SessionUser, paymentId: string) {
 }
 
 export { portalStudentIds };
+
+export async function listPayments(user: SessionUser) {
+  const ctx = authorize(user, "fees.read");
+  return (await query(`SELECT p.id, p.receipt_no, p.amount_paise, p.method, p.reference, p.created_at, i.number invoice_no, s.name student, s.enrolment_no
+    FROM payments p JOIN invoices i ON i.id=p.invoice_id JOIN students s ON s.id=i.student_id
+    WHERE p.institution_id=$1 AND p.status='succeeded' ORDER BY p.created_at DESC LIMIT 100`, [ctx.institutionId])).rows;
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": [
+        "src/app/app/fees/page.tsx",
+        "src/app/app/reports/page.tsx",
+        "src/app/app/students/page.tsx"
+      ],
+      "rules": {
+        "@next/next/no-html-link-for-pages": "off"
+      }
+    }
+  ]
+}
