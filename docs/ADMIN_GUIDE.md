@@ -47,6 +47,8 @@ Permissions are enforced on the server for every action; hiding a menu item is c
 Trial (14 days) → Active. If the trial expires or a payment is overdue (`past_due`) the institution becomes **read-only**: people can sign in and view, but nothing can be changed. `suspended` and `cancelled` institutions cannot sign in. Seat limits (staff, students) are enforced when you add people. Plan and status changes are made by the super admin in `/super`. Automated billing of subscriptions is **not** included: plan state is set by the operator.
 
 ## Super admin (platform operator)
+Created once on the `/setup` page (needs the deployment's `SETUP_TOKEN`) or with `npm run db:bootstrap`. Only one platform administrator can exist.
+
 `/super` shows institutions with plan, status, usage and demo flag. You can change plan, set status (trial, active, past due, suspended, cancelled; changes are audited), extend a trial by 14 days, read the platform audit log, and answer support tickets. Use *Reset link* on an institution's admin if they are locked out.
 
 ## Troubleshooting

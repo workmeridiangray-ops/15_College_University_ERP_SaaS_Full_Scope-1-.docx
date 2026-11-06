@@ -33,6 +33,8 @@ NODE_ENV=production npx next start -p 3000
 Run it under a process manager (systemd, pm2) with `Restart=always`.
 
 ### Create the first super admin (once)
+Easiest, no terminal: set `SETUP_TOKEN` (16+ characters) in the environment, open `/setup` in a browser, fill in the form, then remove `SETUP_TOKEN`. Or use the command below.
+
 ```bash
 BOOTSTRAP_ADMIN_EMAIL=you@example.com BOOTSTRAP_ADMIN_PASSWORD='a-long-passphrase' npm run db:bootstrap
 ```

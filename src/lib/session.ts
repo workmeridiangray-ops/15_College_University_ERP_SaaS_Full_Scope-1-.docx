@@ -20,12 +20,12 @@ export interface SessionUser {
 }
 
 /** Throttle by IP+email to slow credential stuffing, independent of account lockout. */
-async function throttle(key: string): Promise<void> {
+export async function throttle(key: string): Promise<void> {
   const row = await one<{ attempts: number; window_start: Date }>("SELECT attempts, window_start FROM login_attempts WHERE key=$1", [key]);
   if (row && Date.now() - new Date(row.window_start).getTime() < 15 * 60_000 && row.attempts >= 20)
     throw new AppError("rate_limited", "Too many attempts. Please wait 15 minutes and try again.");
 }
-async function noteAttempt(key: string, ok: boolean) {
+export async function noteAttempt(key: string, ok: boolean) {
   if (ok) { await query("DELETE FROM login_attempts WHERE key=$1", [key]); return; }
   await query(
     `INSERT INTO login_attempts (key, attempts, window_start) VALUES ($1,1,now())

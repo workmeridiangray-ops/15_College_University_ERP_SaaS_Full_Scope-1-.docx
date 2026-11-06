@@ -19,8 +19,8 @@ Demo sign-ins (after seeding): `admin@demo.campus.test`, `sunita.rao@demo.campus
 
 ## Quality gates
 ```bash
-npm run typecheck && npm run lint && npm test          # 48 unit/integration tests (embedded DB)
-TEST_DATABASE_URL=postgres://user@host:5432/scratch_db npm run test:pg   # same 48 tests on a real PostgreSQL (wipes that database's public schema!)
+npm run typecheck && npm run lint && npm test          # 53 unit/integration tests (embedded DB)
+TEST_DATABASE_URL=postgres://user@host:5432/scratch_db npm run test:pg   # same 53 tests on a real PostgreSQL (wipes that database's public schema!)
 npm run build && ALLOW_EMBEDDED_DB=1 npx next start -p 3100 &   # then, in another shell:
 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node tests/e2e/smoke.mjs     # every role opens every page
 tests/e2e/run-flows.sh                                                  # interactive journeys

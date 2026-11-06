@@ -7,7 +7,7 @@ Everything below was run in the build workspace against a production build (`nex
 |---|---|
 | `npm run typecheck` (TypeScript strict) | clean |
 | `npm run lint` | no warnings or errors |
-| `npm test` (vitest, 4 files) | **48 / 48 passed** |
+| `npm test` (vitest, 5 files) | **53 / 53 passed** (48 + 5 for first-run setup; also 53/53 on real PostgreSQL) |
 | `npm run build` | compiled successfully |
 | `tests/e2e/smoke.mjs` — real Chromium signs in through the login form as 9 roles and opens every page for each | **68 pages, 0 problems** |
 | `tests/e2e/run-flows.sh` — interactive journeys (A–G below), each section in a fresh browser | **35 / 35 checks passed** (A 16, B 5, C 2, D 7, E 2, F 2, G 1) |
@@ -19,6 +19,7 @@ Everything below was run in the build workspace against a production build (`nex
 | Worker bundle (`opennextjs-cloudflare build`, `wrangler deploy --dry-run`) | builds; 8.6 MB raw, **1.6 MB gzipped** |
 | Worker in Cloudflare's local runtime (`wrangler dev`, local R2 for uploads) + real PostgreSQL: 68-page sweep | 66 pages clean; 2 flagged for an intermittent hydration console error (see CLOUDFLARE_DEPLOY.md §8) |
 | Same runtime: interactive journeys A–G | **35 / 35** (uploads verified landing in R2) |
+| `/setup` page in a real browser on an empty PostgreSQL database, on the Node server and inside the local Worker runtime (`tests/e2e/setup.mjs`): wrong token refused, typed values kept, mismatch refused, administrator created, page closes itself, new administrator signs in to `/super` | **6 / 6** |
 
 ## Journeys driven through the real UI (`tests/e2e/flows.mjs`)
 * **A — Onboarding to money.** Self-serve sign-up; create department → program → section; create a student and receive a one-time activation link; the student activates in a separate browser, signs in and lands in the portal; the link cannot be reused; fee structure → invoice generation; overpayment is rejected with a clear message; a double-clicked "Record" produces exactly one payment; receipt page shows institution, student and amount; invoice becomes partial with the correct balance; the student sees the same balance and receipt; another institution's student page and document id return not-found; CSV export contains only own students; an institution admin cannot open the platform console.
@@ -30,7 +31,7 @@ Everything below was run in the build workspace against a production build (`nex
 * **G — Unsaved work.** Leaving a half-filled form raises the browser's confirmation.
 
 ## Defects found by these runs and fixed
-Success messages were never shown on action buttons · the one-time activation link was not shown after accepting an applicant · applicant documents could not be opened from the Admissions screen · Academics overflowed horizontally on phones · duplicate form-field ids when several forms shared a page · the HR dashboard crashed (HR role lacked student read access) · a failed-login update would have errored on PostgreSQL and prevented lockout · saves left stale data on screen (pages now reload with a banner carrying the success message) · "Record payment"/"Concession" panels collapsed after saving (now controlled panels).
+Every failed save wiped what the user had typed (React clears forms after server actions; values are now restored, passwords excepted) · Success messages were never shown on action buttons · the one-time activation link was not shown after accepting an applicant · applicant documents could not be opened from the Admissions screen · Academics overflowed horizontally on phones · duplicate form-field ids when several forms shared a page · the HR dashboard crashed (HR role lacked student read access) · a failed-login update would have errored on PostgreSQL and prevented lockout · saves left stale data on screen (pages now reload with a banner carrying the success message) · "Record payment"/"Concession" panels collapsed after saving (now controlled panels).
 
 ## Scope status
 See [SCOPE.md](../SCOPE.md): 35 items verified, 5 partly verified with the limit written on the line.

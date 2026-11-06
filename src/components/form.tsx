@@ -60,10 +60,29 @@ export function Form({ action, children, submit = "Save", pendingLabel = "Saving
     }
   }, [state, resetOnSuccess, reload]);
 
+  // React 19 clears an uncontrolled form after every server action, including failed ones. Put back what the user
+  // typed when the save was refused, so a validation error never costs them their input (passwords stay cleared).
+  const snap = useRef<FormData | null>(null);
+  useEffect(() => {
+    if (!state || state.ok || !snap.current || !ref.current) return;
+    const data = snap.current, form = ref.current;
+    const t = setTimeout(() => {
+      for (const el of Array.from(form.elements) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[]) {
+        if (!el.name || el.name.startsWith("$ACTION") || el.name === "idempotencyKey") continue;
+        const type = (el as HTMLInputElement).type;
+        if (type === "password" || type === "file" || type === "hidden" || type === "submit" || type === "button") continue;
+        if (type === "checkbox") (el as HTMLInputElement).checked = data.getAll(el.name).includes(el.value);
+        else if (type === "radio") (el as HTMLInputElement).checked = data.get(el.name) === el.value;
+        else if (data.has(el.name)) el.value = String(data.get(el.name));
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, [state]);
+
   return (
     <Ctx.Provider value={{ fields: state?.fields ?? {}, pending }}>
       <form ref={ref} action={formAction} onChange={() => setDirty(true)} className={className}
-        onSubmit={(e) => { if (confirm && !window.confirm(confirm)) e.preventDefault(); }} aria-busy={pending}>
+        onSubmit={(e) => { if (confirm && !window.confirm(confirm)) { e.preventDefault(); return; } snap.current = new FormData(e.currentTarget); }} aria-busy={pending}>
         {idem && <input type="hidden" name="idempotencyKey" value={key} />}
         {state?.error && (
           <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

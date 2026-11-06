@@ -76,3 +76,11 @@ export async function changePasswordAction(_: FormState, fd: FormData): Promise<
   if (res?.ok && first) { const u = await currentUser(); redirect(u ? homeFor(u.role) : "/login"); }
   return res?.ok ? { ...res, message: "Password updated." } : res;
 }
+
+export async function setupAction(_: FormState, fd: FormData): Promise<FormState> {
+  return guard(async () => {
+    const { setupSuperAdmin } = await import("@/services/platform");
+    await setupSuperAdmin({ token: str(fd, "token"), email: str(fd, "email"), name: str(fd, "name"), password: str(fd, "password"), confirm: str(fd, "confirm") });
+    return { message: "Platform administrator created. Setup is now closed; remove the SETUP_TOKEN secret and sign in below.", data: { done: true } };
+  });
+}

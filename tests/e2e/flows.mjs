@@ -67,7 +67,7 @@ if (want("A")) {
   await p.getByRole("button", { name: "Record payment" }).first().click();
   const pay = p.locator("form", { has: p.getByRole("button", { name: "Record", exact: true }) }).first();
   await pay.getByLabel(/^Amount/).fill("30000"); await pay.getByRole("button", { name: "Record", exact: true }).click();
-  await p.getByText(/exceeds the outstanding balance/).waitFor({ timeout: 10000 }); ok("A8 overpayment rejected with a clear message", true);
+  await p.getByText(/exceeds the outstanding balance/).waitFor({ timeout: 10000 }); ok("A8 overpayment rejected with a clear message, and the typed amount is kept", (await pay.getByLabel(/^Amount/).inputValue()) === "30000");
   await pay.getByLabel(/^Amount/).fill("10000"); await pay.getByRole("button", { name: "Record", exact: true }).dblclick();
   await p.getByText(/Payment recorded\. Receipt RCP-/).waitFor({ timeout: 10000 });
   await p.goto(BASE + "/app/fees?tab=payments");

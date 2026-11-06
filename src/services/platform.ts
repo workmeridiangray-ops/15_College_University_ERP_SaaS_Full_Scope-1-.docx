@@ -1,8 +1,9 @@
+import crypto from "node:crypto";
 import { z } from "zod";
 import { one, query, tx } from "@/lib/db";
 import { AppError, conflict, forbidden, invalid, notFound } from "@/lib/errors";
 import { audit } from "@/lib/audit";
-import { authorize, type SessionUser } from "@/lib/session";
+import { authorize, noteAttempt, throttle, type SessionUser } from "@/lib/session";
 import { hashPassword, randomToken, sha256, validatePasswordStrength } from "@/lib/crypto";
 import { parse } from "./core";
 
@@ -142,4 +143,31 @@ export async function issueAdminResetLink(user: SessionUser | null, institutionI
   await query("INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1,$2, now() + interval '24 hours')", [sha256(token), admin.id]);
   await audit({ id: u.id, institutionId }, "platform.admin_reset_link", "user", admin.id);
   return token;
+}
+
+/* ---------- Browser-based first-run setup ---------- */
+export type SetupState = "disabled" | "done" | "open";
+/** "open" only when SETUP_TOKEN is configured (16+ characters) and no super admin exists yet. */
+export async function setupState(): Promise<SetupState> {
+  if (await one("SELECT 1 FROM users WHERE role='super_admin'")) return "done";
+  return (process.env.SETUP_TOKEN ?? "").length >= 16 ? "open" : "disabled";
+}
+
+/** Creates the first super admin from the /setup page. Needs the SETUP_TOKEN secret; disables itself afterwards. */
+export async function setupSuperAdmin(input: { token: string; email: string; name: string; password: string; confirm: string }) {
+  const state = await setupState();
+  if (state === "disabled") throw notFound("Setup is not enabled.");
+  if (state === "done") throw conflict("Setup is already complete. Please sign in.");
+  await throttle("setup:all");
+  const expected = crypto.createHash("sha256").update(process.env.SETUP_TOKEN!).digest();
+  const given = crypto.createHash("sha256").update(input.token ?? "").digest();
+  if (!crypto.timingSafeEqual(expected, given)) {
+    await noteAttempt("setup:all", false);
+    throw invalid("That setup token is not correct.", { token: "Incorrect token" });
+  }
+  if (input.password !== input.confirm) throw invalid("The two passwords do not match.", { confirm: "Does not match" });
+  const email = parse(z.string().trim().email().max(200), input.email);
+  const name = parse(z.string().trim().min(2).max(100), input.name);
+  await bootstrapSuperAdmin(email, input.password, name);
+  await noteAttempt("setup:all", true);
 }

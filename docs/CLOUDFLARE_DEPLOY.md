@@ -25,8 +25,8 @@ git clone https://github.com/workmeridiangray-ops/15_college_university_erp_saas
 cd campus-erp && npm ci
 export DATABASE_URL='<SESSION pooler string>'
 npm run db:migrate                      # creates all tables and the three plans
-BOOTSTRAP_ADMIN_EMAIL=you@example.com BOOTSTRAP_ADMIN_PASSWORD='a-long-passphrase' npm run db:bootstrap   # your super-admin login
 ```
+Your platform administrator is created later **in the browser** (step 4b), so no terminal command is needed for it. (Prefer the terminal? `BOOTSTRAP_ADMIN_EMAIL=you@example.com BOOTSTRAP_ADMIN_PASSWORD='a-long-passphrase' npm run db:bootstrap` still works.)
 Do **not** run `db:seed-demo` against your live database unless you want a flagged demo institution in it.
 
 ## 3. Cloudflare setup (one time)
@@ -37,6 +37,7 @@ npx wrangler r2 bucket create campus-erp-uploads
 Edit `wrangler.jsonc`: set `APP_URL` to the address people will use (you will see the `*.workers.dev` address after the first deploy; edit and deploy again, or use your custom domain). Then add the secrets (each command prompts for the value):
 ```bash
 npx wrangler secret put DATABASE_URL     # paste the TRANSACTION pooler string (port 6543)
+npx wrangler secret put SETUP_TOKEN      # invent a long random phrase (16+ characters); you type it once on the /setup page
 # optional:
 npx wrangler secret put SMTP_URL
 npx wrangler secret put RAZORPAY_KEY_ID
@@ -48,7 +49,14 @@ npx wrangler secret put RAZORPAY_WEBHOOK_SECRET
 ```bash
 npm run cf:deploy
 ```
-Wrangler prints the live URL. Open `<url>/api/health` — it must return `{"status":"ok"}` — then sign in at `<url>/login` with the super-admin you created and open `/super`.
+Wrangler prints the live URL. Open `<url>/api/health` — it must return `{"status":"ok"}`.
+
+### 4b. Create the platform administrator in the browser
+1. Open `<url>/setup`. Enter the `SETUP_TOKEN` phrase, your name, email and a password, and press **Create administrator**.
+2. The page closes itself as soon as an administrator exists (anyone opening `/setup` afterwards sees "Setup is already complete").
+3. Remove the secret: `npx wrangler secret delete SETUP_TOKEN`.
+4. Sign in at `<url>/login`; you land on the platform console at `/super`.
+The page only works while **no** administrator exists and a `SETUP_TOKEN` is configured; wrong tokens are rate-limited (20 attempts per 15 minutes) and the database allows only one platform administrator.
 
 ## 5. Check it properly (do not skip)
 1. Health check above.
