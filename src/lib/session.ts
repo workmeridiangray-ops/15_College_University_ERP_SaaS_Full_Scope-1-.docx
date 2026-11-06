@@ -42,7 +42,7 @@ export async function login(email: string, password: string, ip = "unknown"): Pr
   await throttle(key);
   const u = await one<{ id: string; password_hash: string; active: boolean; failed_logins: number; locked_until: Date | null; institution_id: string | null }>(
     "SELECT id, password_hash, active, failed_logins, locked_until, institution_id FROM users WHERE lower(email)=$1", [e]);
-  const generic = new AppError("unauthenticated", "Incorrect email or password.");
+  const generic = new AppError("invalid", "Incorrect email or password.");
   if (!u) { verifyPassword(password, "scrypt$00$00"); await noteAttempt(key, false); throw generic; }
   if (u.locked_until && new Date(u.locked_until) > new Date())
     throw new AppError("rate_limited", "This account is temporarily locked after too many failed attempts. Try again in a few minutes or reset your password.");
