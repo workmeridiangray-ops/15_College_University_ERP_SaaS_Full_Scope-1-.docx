@@ -1,10 +1,15 @@
-import { useMemoryDb } from "@/lib/db";
+import { useMemoryDb, usePostgres } from "@/lib/db";
 import { migrate } from "@/lib/migrate";
 import { signupInstitution, createStaffUser, createDepartment, createProgram, createSection, createCourse } from "@/services/core";
 import { userFromToken, login } from "@/lib/session";
 
 export async function freshDb() {
-  useMemoryDb();
+  // TEST_DATABASE_URL=postgres://… runs the whole suite against a real PostgreSQL server (schema is wiped first).
+  const url = process.env.TEST_DATABASE_URL;
+  if (url) {
+    const db = usePostgres(url);
+    await db.exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+  } else useMemoryDb();
   await migrate();
 }
 

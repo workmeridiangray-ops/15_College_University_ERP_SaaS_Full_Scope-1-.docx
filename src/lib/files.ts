@@ -19,6 +19,22 @@ export function safeFilename(name: string): string {
   return base || "document";
 }
 
+/** Minimal view of a Cloudflare R2 bucket binding (named UPLOADS in wrangler.jsonc). */
+type R2 = {
+  put(key: string, value: ArrayBuffer | Uint8Array, opts?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer> } | null>;
+};
+/** On Cloudflare Workers files live in R2; everywhere else (Node, tests) on disk under UPLOAD_DIR. */
+async function bucket(): Promise<R2 | null> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const env = getCloudflareContext().env as { UPLOADS?: R2 };
+    return env.UPLOADS ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveUpload(institutionId: string, file: File): Promise<{ storedName: string; mime: string; size: number; filename: string }> {
   if (file.size === 0) throw invalid("That file is empty.");
   if (file.size > MAX_UPLOAD_BYTES) throw invalid("Files must be 5 MB or smaller.");
@@ -26,13 +42,23 @@ export async function saveUpload(institutionId: string, file: File): Promise<{ s
   const kind = sniff(buf);
   if (!kind) throw invalid("Only PDF, PNG or JPG files are accepted.");
   const storedName = `${crypto.randomUUID()}.${kind.ext}`;
-  const dir = path.join(uploadRoot(), institutionId);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(dir, storedName), buf, { flag: "wx" });
+  const r2 = await bucket();
+  if (r2) await r2.put(`${institutionId}/${storedName}`, buf, { httpMetadata: { contentType: kind.mime } });
+  else {
+    const dir = path.join(uploadRoot(), institutionId);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, storedName), buf, { flag: "wx" });
+  }
   return { storedName, mime: kind.mime, size: buf.length, filename: safeFilename(file.name) };
 }
 
 export async function readUpload(institutionId: string, storedName: string): Promise<Buffer> {
   if (!/^[0-9a-f-]{36}\.(pdf|png|jpg)$/.test(storedName)) throw new Error("bad stored name");
+  const r2 = await bucket();
+  if (r2) {
+    const o = await r2.get(`${institutionId}/${storedName}`);
+    if (!o) throw new Error("file missing");
+    return Buffer.from(await o.arrayBuffer());
+  }
   return fs.readFile(path.join(uploadRoot(), institutionId, storedName));
 }

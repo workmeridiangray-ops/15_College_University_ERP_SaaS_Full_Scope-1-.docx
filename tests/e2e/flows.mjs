@@ -122,7 +122,7 @@ if (want("D")) {
   await p.goto(BASE + "/apply/demo-institute");
   await p.getByLabel(/^Program/).selectOption({ index: 1 }); await p.getByLabel(/^Full name/).fill("Tara Applicant"); await p.getByLabel(/^Email/).fill(email); await p.getByLabel(/^Mobile number/).fill("9876543210"); await p.getByLabel(/^Previous exam percentage/).fill("87.5");
   await p.getByRole("button", { name: "Submit application" }).click(); await p.getByText(/Your tracking code is APP-/).waitFor({ timeout: 10000 });
-  const code = (await p.getByText(/Your tracking code is APP-/).first().innerText()).match(/APP-[A-Z0-9]{8}/)[0]; ok("D1 application submitted, tracking code issued", !!code, code);
+  await p.waitForFunction(() => /APP-[A-Z0-9]{8}/.test(document.body.innerText), null, { timeout: 15000 }); const code = (await text(p)).match(/APP-[A-Z0-9]{8}/)[0]; ok("D1 application submitted, tracking code issued", !!code, code);
   await p.getByRole("button", { name: "Submit application" }).click(); await p.waitForTimeout(500);
   await p.goto(BASE + "/track"); await p.getByLabel("Tracking code").fill(code); await p.getByLabel("Email").fill(email); await p.getByRole("button", { name: "Check status" }).click();
   await p.getByText(/waiting for review/).waitFor({ timeout: 10000 }); ok("D2 applicant tracks status", true);

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["@electric-sql/pglite", "pg"],
+  serverExternalPackages: ["@electric-sql/pglite"],
   poweredByHeader: false,
   async headers() {
     return [{

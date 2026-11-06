@@ -108,9 +108,11 @@ export async function recordPayment(user: SessionUser, input: unknown) {
   await assertOwned("invoices", d.invoiceId, ctx.institutionId);
   const paise = toPaise(d.amount);
   return tx(async (q) => {
+    // Lock the invoice first: concurrent attempts on the same invoice queue here, so a double-click's second request
+    // sees the first one's payment below instead of racing it into the unique index.
+    const inv = (await q.query<{ status: string }>("SELECT status FROM invoices WHERE id=$1 AND institution_id=$2 FOR UPDATE", [d.invoiceId, ctx.institutionId])).rows[0];
     const dup = (await q.query<{ id: string; receipt_no: string }>("SELECT id, receipt_no FROM payments WHERE institution_id=$1 AND idempotency_key=$2", [ctx.institutionId, d.idempotencyKey])).rows[0];
     if (dup) return { paymentId: dup.id, receiptNo: dup.receipt_no, duplicate: true };
-    const inv = (await q.query<{ status: string }>("SELECT status FROM invoices WHERE id=$1 AND institution_id=$2 FOR UPDATE", [d.invoiceId, ctx.institutionId])).rows[0];
     if (inv.status === "cancelled") throw conflict("This invoice is cancelled.");
     const bal = await invoiceBalance(q, d.invoiceId);
     if (bal <= 0) throw conflict("This invoice is already fully paid.");

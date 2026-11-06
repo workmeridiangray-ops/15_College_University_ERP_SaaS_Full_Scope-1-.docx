@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "campus-erp",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public", "nodejs_compat_populate_process_env"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+  // Non-secret settings. Secrets (DATABASE_URL, RAZORPAY_*, SMTP_URL...) are set with `wrangler secret put`.
+  "vars": {
+    // Edit to your real address (workers.dev URL or custom domain). Used in emailed links.
+    "APP_URL": "https://campus-erp.YOUR-SUBDOMAIN.workers.dev",
+    "DB_PER_REQUEST": "1",
+    "ALLOW_EMBEDDED_DB": "0"
+  },
+  // Uploaded documents. Create once: wrangler r2 bucket create campus-erp-uploads
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "campus-erp-uploads" }]
+}

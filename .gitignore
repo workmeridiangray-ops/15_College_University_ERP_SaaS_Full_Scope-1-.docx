@@ -6,3 +6,6 @@ node_modules
 next-env.d.ts
 .data
 uploads
+.open-next
+.dev.vars
+.wrangler
