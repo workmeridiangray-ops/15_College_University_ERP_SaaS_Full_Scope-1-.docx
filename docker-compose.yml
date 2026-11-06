@@ -1,0 +1,27 @@
+# Local production-like stack: PostgreSQL + the app.
+# Copy .env.example to .env, set the values, then: docker compose up --build
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: campus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: campus_erp
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campus -d campus_erp"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://campus:${POSTGRES_PASSWORD}@db:5432/campus_erp
+      UPLOAD_DIR: /var/data/uploads
+    ports: ["3000:3000"]
+    volumes: [uploads:/var/data/uploads]
+volumes:
+  dbdata:
+  uploads:

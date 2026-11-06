@@ -4,6 +4,7 @@
     {
       "files": [
         "src/app/app/fees/page.tsx",
+        "src/app/app/admissions/page.tsx",
         "src/app/app/reports/page.tsx",
         "src/app/app/students/page.tsx"
       ],

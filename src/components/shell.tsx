@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { FlashBanner } from "@/components/form";
 import { logoutAction } from "@/actions/auth";
 import { institutionAccess, type SessionUser } from "@/lib/session";
 import { can, type Permission } from "@/lib/permissions";
@@ -69,7 +70,7 @@ export async function Shell({ user, children, area }: { user: SessionUser; child
         {access === "read_only" && <div role="alert" className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900 md:px-8">Your subscription has lapsed, so the system is <strong>read-only</strong>. Contact support to renew and restore editing.</div>}
         {access === "blocked" && <div role="alert" className="bg-red-100 px-4 py-2 text-center text-sm text-red-900 md:px-8">This institution is <strong>suspended</strong>. Contact platform support to restore access.</div>}
         {trialLeft !== null && trialLeft >= 0 && access === "ok" && <div className="bg-brand-50 px-4 py-2 text-center text-sm text-brand-700 md:px-8">Free trial: {trialLeft} day{trialLeft === 1 ? "" : "s"} left.</div>}
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8"><FlashBanner />{children}</main>
       </div>
     </div>
   );

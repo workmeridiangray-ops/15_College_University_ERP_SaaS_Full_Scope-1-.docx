@@ -179,7 +179,7 @@ export async function listApplications(user: SessionUser, status?: string) {
   const ctx = authorize(user, "admissions.manage");
   const params: unknown[] = [ctx.institutionId]; let w = "a.institution_id=$1";
   if (status) { params.push(status); w += " AND a.status=$2"; }
-  return (await query(`SELECT a.*, p.name program FROM applications a JOIN programs p ON p.id=a.program_id WHERE ${w} ORDER BY a.created_at DESC LIMIT 200`, params)).rows;
+  return (await query(`SELECT a.*, p.name program, (SELECT COALESCE(json_agg(json_build_object('id', d.id, 'name', d.filename) ORDER BY d.created_at), '[]'::json) FROM documents d WHERE d.owner_type='application' AND d.owner_id=a.id AND d.institution_id=a.institution_id) docs FROM applications a JOIN programs p ON p.id=a.program_id WHERE ${w} ORDER BY a.created_at DESC LIMIT 200`, params)).rows;
 }
 
 const NEXT: Record<string, string[]> = {

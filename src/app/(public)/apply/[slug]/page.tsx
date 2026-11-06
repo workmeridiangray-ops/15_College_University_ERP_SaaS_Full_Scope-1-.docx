@@ -16,7 +16,7 @@ export default async function Apply({ params }: { params: Promise<{ slug: string
       <p className="mb-6 mt-1 text-sm text-slate-500">Takes about three minutes. You can attach documents after you submit. Already applied? <Link className="text-brand-600 hover:underline" href="/track">Track your application</Link>.</p>
       {data.programs.length === 0 ? <div className="card p-6 text-sm text-slate-600">This institution has not opened any programs for applications yet. Please check back soon.</div> : (
         <div className="card p-6">
-          <Form action={applyAction} submit="Submit application" pendingLabel="Submitting…" resetOnSuccess>
+          <Form action={applyAction} submit="Submit application" pendingLabel="Submitting…" resetOnSuccess reload={false}>
             <input type="hidden" name="institutionSlug" value={slug} />
             <div className="space-y-4">
               <Field name="programId" label="Program" options={(data.programs as any[]).map((p) => ({ value: p.id, label: `${p.name} (${p.duration_years} yr)` }))} />

@@ -14,7 +14,7 @@ export default async function ChangePassword({ searchParams }: { searchParams: P
       <p className="mb-6 mt-1 text-sm text-slate-500">Signed in as {u.email}</p>
       {first && <Notice tone="warn">Your account was created with a temporary password. Choose a new one to continue.</Notice>}
       <div className="card p-6">
-        <Form action={changePasswordAction} submit="Update password" pendingLabel="Updating…" resetOnSuccess>
+        <Form action={changePasswordAction} submit="Update password" pendingLabel="Updating…" resetOnSuccess reload={false}>
           <input type="hidden" name="first" value={first ? "1" : ""} />
           <div className="space-y-4">
             <Field name="current" label={first ? "Temporary password" : "Current password"} type="password" autoComplete="current-password" />

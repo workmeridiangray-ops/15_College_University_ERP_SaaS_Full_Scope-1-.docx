@@ -221,7 +221,7 @@ export async function updateInstitutionProfile(user: SessionUser, input: unknown
 }
 
 export async function getInstitution(user: SessionUser) {
-  const ctx = authorize(user, "students.read");
+  const ctx = authorize(user, "support.create"); // any signed-in member may read their own institution's name and plan
   return one<{ id: string; name: string; contact_email: string | null; address: string | null; status: string; plan_name: string; trial_ends_at: Date | null; is_demo: boolean; max_students: number; max_staff: number }>(
     `SELECT i.id, i.name, i.contact_email, i.address, i.status, p.name plan_name, i.trial_ends_at, i.is_demo, p.max_students, p.max_staff
      FROM institutions i LEFT JOIN plans p ON p.id=i.plan_id WHERE i.id=$1`, [ctx.institutionId]);

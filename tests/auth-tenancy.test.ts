@@ -80,3 +80,15 @@ describe("tenant isolation", () => {
     await expect(makeFaculty(B.admin, "admin@alpha.test")).rejects.toThrow(/already exists/);
   });
 });
+
+describe("every staff role can open its dashboard data", () => {
+  it("loads the institution record and dashboard for roles without student access (HR)", async () => {
+    const { getInstitution } = await import("@/services/core");
+    const { staffDashboard } = await import("@/services/dashboard");
+    for (const role of ["hr_manager", "librarian", "accountant", "admissions_officer", "hod", "faculty"] as const) {
+      const f = await makeFaculty(A.admin, `${role}-dash@alpha.test`, role as any);
+      expect((await getInstitution(f.user))?.name).toBe("Alpha College");
+      await expect(staffDashboard(f.user)).resolves.toBeTruthy();
+    }
+  });
+});
